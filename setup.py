@@ -8,7 +8,7 @@ setup(
     license='MIT',
     author='Kyle Smith',
     author_email='smithk86@gmail.com',
-    packages=['quart_message_broker'],
+    packages=['asyncio_multisubscriber_queue'],
     setup_requires=[
         'pytest-runner'
     ],
