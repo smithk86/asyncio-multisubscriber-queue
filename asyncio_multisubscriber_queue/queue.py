@@ -6,7 +6,7 @@ class MultisubscriberQueue(object):
 
     def __init__(self, maxsize=0, loop=None):
         self.maxsize = maxsize
-        self.loop = loop
+        self.loop = loop if loop else asyncio.get_running_loop()
         self.subscribers = list()
 
     def __len__(self):

@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name='asyncio-multisubscriber-queue',
-    version='0.1.2',
+    version='0.1.3',
     license='MIT',
     author='Kyle Smith',
     author_email='smithk86@gmail.com',
