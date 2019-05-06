@@ -1,6 +1,5 @@
 import asyncio
 from asyncio import Queue, wait_for
-from uuid import uuid4
 
 
 class MultisubscriberQueue(object):
@@ -8,20 +7,19 @@ class MultisubscriberQueue(object):
     def __init__(self, maxsize=0, loop=None):
         self.maxsize = maxsize
         self.loop = loop
-        self.subscribers = dict()
+        self.subscribers = list()
 
     def __len__(self):
         return len(self.subscribers)
 
-    def __contains__(self, _id):
-        return _id in self.subscribers
+    def __contains__(self, q):
+        return q in self.subscribers
 
-    def __getitem__(self, _id):
-        return self.subscribers[_id]
+    def queue(self):
+        return _QueueContext(self)
 
     async def subscribe(self, timeout=0, timeout_value=None):
-        _id, q = self.new()
-        try:
+        with self.queue() as q:
             while True:
                 if timeout > 0:
                     try:
@@ -36,24 +34,34 @@ class MultisubscriberQueue(object):
                     break
                 else:
                     yield val
-        finally:
-            self.remove(_id)
 
     def new(self):
         q = Queue(maxsize=self.maxsize, loop=self.loop)
-        _id = str(uuid4())
-        self.subscribers[_id] = q
-        return (_id, q)
+        self.subscribers.append(q)
+        return q
 
-    def remove(self, _id):
-        if _id in self.subscribers:
-            self.subscribers.pop(_id)
+    def remove(self, q):
+        if q in self.subscribers:
+            self.subscribers.remove(q)
         else:
-            raise KeyError(f'subscriber id is invalid: {_id}')
+            raise KeyError('subscriber queue does not exist')
 
     async def put(self, val):
-        for q in self.subscribers.values():
+        for q in self.subscribers:
             await q.put(val)
 
     async def close(self):
         await self.put(StopAsyncIteration)
+
+
+class _QueueContext(object):
+    def __init__(self, parent):
+        self.parent = parent
+        self.queue = None
+
+    def __enter__(self):
+        self.queue = self.parent.new()
+        return self.queue
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.parent.remove(self.queue)

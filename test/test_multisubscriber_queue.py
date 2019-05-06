@@ -1,6 +1,25 @@
 import asyncio
 
 import pytest
+from asyncio_multisubscriber_queue import MultisubscriberQueue
+from asyncio_multisubscriber_queue.queue import _QueueContext
+
+
+def test_queue(multisubscriber_queue):
+    assert len(multisubscriber_queue) == 0
+    q = multisubscriber_queue.new()
+    assert type(q) is asyncio.Queue
+    assert len(multisubscriber_queue) == 1
+    multisubscriber_queue.remove(q)
+    assert len(multisubscriber_queue) == 0
+
+
+def test_queue_context(multisubscriber_queue):
+    assert len(multisubscriber_queue) == 0
+    with multisubscriber_queue.queue() as q:
+        assert type(q) is asyncio.Queue
+        assert len(multisubscriber_queue) == 1
+    assert len(multisubscriber_queue) == 0
 
 
 @pytest.mark.asyncio
