@@ -4,8 +4,7 @@ from asyncio import Queue, wait_for
 
 class MultisubscriberQueue(object):
 
-    def __init__(self, maxsize=0, loop=None):
-        self.maxsize = maxsize
+    def __init__(self, loop=None):
         self.loop = loop if loop else asyncio.get_running_loop()
         self.subscribers = list()
 
@@ -15,28 +14,17 @@ class MultisubscriberQueue(object):
     def __contains__(self, q):
         return q in self.subscribers
 
-    def queue(self):
-        return _QueueContext(self)
-
-    async def subscribe(self, timeout=0, timeout_value=None):
-        with self.queue() as q:
+    async def subscribe(self):
+        with _QueueContext(self) as q:
             while True:
-                if timeout > 0:
-                    try:
-                        val = await wait_for(q.get(), timeout=timeout)
-                    except asyncio.TimeoutError:
-                        if timeout_value:
-                            val = timeout_value
-                else:
-                    val = await q.get()
-
+                val = await q.get()
                 if val is StopAsyncIteration:
                     break
                 else:
                     yield val
 
-    def new(self):
-        q = Queue(maxsize=self.maxsize, loop=self.loop)
+    def queue(self):
+        q = Queue(loop=self.loop)
         self.subscribers.append(q)
         return q
 
@@ -60,7 +48,7 @@ class _QueueContext(object):
         self.queue = None
 
     def __enter__(self):
-        self.queue = self.parent.new()
+        self.queue = self.parent.queue()
         return self.queue
 
     def __exit__(self, exc_type, exc_val, exc_tb):
