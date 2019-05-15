@@ -1,10 +1,17 @@
 import asyncio
 from asyncio import Queue, wait_for
+from typing import Any
 
 
 class MultisubscriberQueue(object):
-
     def __init__(self, loop=None):
+        """
+        The constructor for MultisubscriberQueue class
+
+        Parameters:
+            loop (asyncio.AbstractEventLoop): explicitly define an event loop
+
+        """
         self.loop = loop if loop else asyncio.get_running_loop()
         self.subscribers = list()
 
@@ -15,7 +22,18 @@ class MultisubscriberQueue(object):
         return q in self.subscribers
 
     async def subscribe(self):
-        with _QueueContext(self) as q:
+        """
+        Subscribe to data using an async generator
+
+        Instead of working with the Queue directly, the client can
+        subscribe to data and have it yielded directly.
+
+        Example:
+            with MultisubscriberQueue.subscribe() as data:
+                print(data)
+
+        """
+        with self.queue_context() as q:
             while True:
                 val = await q.get()
                 if val is StopAsyncIteration:
@@ -24,21 +42,54 @@ class MultisubscriberQueue(object):
                     yield val
 
     def queue(self):
+        """
+        Get a new async Queue
+
+        """
         q = Queue(loop=self.loop)
         self.subscribers.append(q)
         return q
 
+    def queue_context(self):
+        """
+        Get a new queue context wrapper
+
+        The queue context wrapper allows the queue to be automatically removed
+        from the subscriber pool when the context is exited.
+
+        Example:
+            with MultisubscriberQueue.queue_context() as q:
+                await q.get()
+
+        """
+        return _QueueContext(self)
+
     def remove(self, q):
+        """
+        Remove queue from the pool of subscribers
+
+        """
         if q in self.subscribers:
             self.subscribers.remove(q)
         else:
             raise KeyError('subscriber queue does not exist')
 
-    async def put(self, val):
+    async def put(self, data: Any):
+        """
+        Put new data on all subscriber queues
+
+        Parameters:
+            data: queue data
+
+        """
         for q in self.subscribers:
-            await q.put(val)
+            await q.put(data)
 
     async def close(self):
+        """
+        Force clients using MultisubscriberQueue.subscribe() to end iteration
+
+        """
         await self.put(StopAsyncIteration)
 
 

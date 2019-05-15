@@ -2,7 +2,6 @@ import asyncio
 
 import pytest
 from asyncio_multisubscriber_queue import MultisubscriberQueue
-from asyncio_multisubscriber_queue.queue import _QueueContext
 
 
 def test_queue(multisubscriber_queue):
@@ -16,7 +15,7 @@ def test_queue(multisubscriber_queue):
 
 def test_queue_context(multisubscriber_queue):
     assert len(multisubscriber_queue) == 0
-    with _QueueContext(multisubscriber_queue) as q:
+    with multisubscriber_queue.queue_context() as q:
         assert type(q) is asyncio.Queue
         assert len(multisubscriber_queue) == 1
     assert len(multisubscriber_queue) == 0
@@ -48,11 +47,10 @@ async def test_single_subscriber(multisubscriber_queue, event_loop):
 
 @pytest.mark.asyncio
 async def test_multiple_subscribers(multisubscriber_queue, event_loop):
-
     async def create_consumer():
         subscriber = multisubscriber_queue.subscribe()
-        print(await subscriber.__anext__())
-        print(await subscriber.__anext__())
+        await subscriber.__anext__()
+        await subscriber.__anext__()
 
     tasks = list()
     tasks.append(event_loop.create_task(create_consumer()))
