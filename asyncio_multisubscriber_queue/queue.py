@@ -4,15 +4,11 @@ from typing import Any
 
 
 class MultisubscriberQueue(object):
-    def __init__(self, loop=None):
+    def __init__(self):
         """
         The constructor for MultisubscriberQueue class
 
-        Parameters:
-            loop (asyncio.AbstractEventLoop): explicitly define an event loop
-
         """
-        self.loop = loop if loop else asyncio.get_running_loop()
         self.subscribers = list()
 
     def __len__(self):
@@ -46,7 +42,7 @@ class MultisubscriberQueue(object):
         Get a new async Queue
 
         """
-        q = Queue(loop=self.loop)
+        q = Queue()
         self.subscribers.append(q)
         return q
 
