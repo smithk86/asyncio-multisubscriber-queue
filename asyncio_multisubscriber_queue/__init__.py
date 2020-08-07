@@ -1,6 +1,6 @@
 import sys
 
-__version__ = '0.2.3'
+__VERSION__ = '0.2.4-dev'
 __MIN_PYTHON__ = (3, 7)
 
 

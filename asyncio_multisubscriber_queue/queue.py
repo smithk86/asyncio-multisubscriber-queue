@@ -9,6 +9,7 @@ class MultisubscriberQueue(object):
         The constructor for MultisubscriberQueue class
 
         """
+        super().__init__()
         self.subscribers = list()
 
     def __len__(self):

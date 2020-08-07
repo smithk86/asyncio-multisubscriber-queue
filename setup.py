@@ -8,7 +8,7 @@ dir_ = os.path.abspath(os.path.dirname(__file__))
 # get the version to include in setup()
 with open(f'{dir_}/asyncio_multisubscriber_queue/__init__.py') as fh:
     for line in fh:
-        if '__version__' in line:
+        if '__VERSION__' in line:
             exec(line)
 # get long description from README.md
 with open(f'{dir_}/README.md') as fh:
@@ -17,7 +17,7 @@ with open(f'{dir_}/README.md') as fh:
 
 setup(
     name='asyncio-multisubscriber-queue',
-    version=__version__,
+    version=__VERSION__,
     license='MIT',
     author='Kyle Smith',
     author_email='smithk86@gmail.com',
