@@ -1,6 +1,7 @@
 import sys
 
 __VERSION__ = '0.2.4-dev'
+__DATE__ = '2020-08-07'
 __MIN_PYTHON__ = (3, 7)
 
 

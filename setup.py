@@ -32,8 +32,13 @@ setup(
         'pytest',
         'pytest-asyncio'
     ],
+    python_requires='>=3.7',
     classifiers=[
         'Intended Audience :: Developers',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Operating System :: OS Independent',
         'Framework :: AsyncIO',
         'Topic :: Software Development :: Libraries :: Python Modules'
     ]
