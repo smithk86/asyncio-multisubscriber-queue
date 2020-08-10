@@ -4,7 +4,7 @@ from typing import Any
 
 
 class MultisubscriberQueue(object):
-    def __init__(self):
+    def __init__(self, **kwargs):
         """
         The constructor for MultisubscriberQueue class
 
