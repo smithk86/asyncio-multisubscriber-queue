@@ -2,9 +2,9 @@ name: pytest
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.7, 3.8]
+        python-version: [3.7, 3.8, 3.9]
     steps:
     - name: checkout
       uses: actions/checkout@v2
@@ -24,4 +24,4 @@ jobs:
     - name: pip-requirements
       run: pip install --upgrade -r reqs-test.txt
     - name: run-test
-      run: pytest -sv --continue-on-collection-errors ./test
+      run: pytest -sv --mypy --continue-on-collection-errors ./test

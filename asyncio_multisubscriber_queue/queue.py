@@ -1,24 +1,26 @@
+from __future__ import annotations
+
 import asyncio
 from asyncio import Queue, wait_for
-from typing import Any
+from contextlib import contextmanager
+from typing import Any, AsyncGenerator, Generator, List
 
 
-class MultisubscriberQueue(object):
-    def __init__(self, **kwargs):
+class MultisubscriberQueue:
+    def __init__(self):
         """
         The constructor for MultisubscriberQueue class
 
         """
-        super().__init__()
-        self.subscribers = list()
+        self.subscribers: List[Queue] = list()
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.subscribers)
 
-    def __contains__(self, q):
+    def __contains__(self, q: Queue) -> bool:
         return q in self.subscribers
 
-    async def subscribe(self):
+    async def subscribe(self) -> AsyncGenerator:
         """
         Subscribe to data using an async generator
 
@@ -30,74 +32,47 @@ class MultisubscriberQueue(object):
                 print(data)
 
         """
-        with self.queue_context() as q:
+        with self.queue() as q:
             while True:
-                val = await q.get()
-                if val is StopAsyncIteration:
+                _data: Any = await q.get()
+                if _data is StopAsyncIteration:
                     break
                 else:
-                    yield val
+                    yield _data
 
-    def queue(self):
+    @contextmanager
+    def queue(self) -> Generator:
         """
-        Get a new async Queue
-
-        """
-        q = Queue()
-        self.subscribers.append(q)
-        return q
-
-    def queue_context(self):
-        """
-        Get a new queue context wrapper
-
-        The queue context wrapper allows the queue to be automatically removed
-        from the subscriber pool when the context is exited.
-
-        Example:
-            with MultisubscriberQueue.queue_context() as q:
-                await q.get()
+        Get a new async Queue which is tracked and garbage collected
+        when the context is concluded
 
         """
-        return _QueueContext(self)
+        _queue: Queue = Queue()
+        try:
+            self.subscribers.append(_queue)
+            yield _queue
+        finally:
+            self.subscribers.remove(_queue)
 
-    def remove(self, q):
+    def remove(self, queue: Queue) -> None:
         """
         Remove queue from the pool of subscribers
 
         """
-        if q in self.subscribers:
-            self.subscribers.remove(q)
-        else:
-            raise KeyError('subscriber queue does not exist')
+        if queue in self.subscribers:
+            self.subscribers.remove(queue)
 
-    async def put(self, data: Any):
+    async def put(self, data: Any) -> None:
         """
         Put new data on all subscriber queues
 
-        Parameters:
-            data: queue data
-
         """
-        for q in self.subscribers:
-            await q.put(data)
+        for _queue in self.subscribers:
+            await _queue.put(data)
 
-    async def close(self):
+    async def close(self) -> None:
         """
         Force clients using MultisubscriberQueue.subscribe() to end iteration
 
         """
         await self.put(StopAsyncIteration)
-
-
-class _QueueContext(object):
-    def __init__(self, parent):
-        self.parent = parent
-        self.queue = None
-
-    def __enter__(self):
-        self.queue = self.parent.queue()
-        return self.queue
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.parent.remove(self.queue)

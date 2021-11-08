@@ -1,8 +1,10 @@
 import sys
+from typing import Tuple
 
-__VERSION__ = '0.2.5'
-__DATE__ = '2020-08-10'
-__MIN_PYTHON__ = (3, 7)
+
+__VERSION__: str = '0.3.0'
+__DATE__: str = '2021-11-08'
+__MIN_PYTHON__: Tuple[int, int] = (3, 7)
 
 
 if sys.version_info < __MIN_PYTHON__:
