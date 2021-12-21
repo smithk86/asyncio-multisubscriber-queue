@@ -1,0 +1,32 @@
+[tool]
+[tool.poetry]
+name = "asyncio-multisubscriber-queue"
+version = "0.3.1"
+description = "allow a single producer to provide the same payload to multiple consumers simultaniously"
+authors = ["Kyle Smith <smithk86@smc3.com>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/smithk86/asyncio-multisubscriber-queue"
+classifiers = [
+    "Framework :: AsyncIO",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+
+[tool.poetry.dev-dependencies]
+mypy = "^0.920"
+pytest = "^6.2"
+pytest-asyncio = "^0.16.0"
+pytest-mypy = "^0.8.1"
+
+[tool.poetry.scripts]
+pytest = "pytest:main"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+addopts = "--mypy"

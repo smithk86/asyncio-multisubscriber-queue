@@ -3,7 +3,10 @@ from __future__ import annotations
 import asyncio
 from asyncio import Queue, wait_for
 from contextlib import contextmanager
-from typing import Any, AsyncGenerator, Generator, List
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any, AsyncGenerator, Generator, List
 
 
 class MultisubscriberQueue:
