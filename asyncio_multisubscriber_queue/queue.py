@@ -9,7 +9,7 @@ class MultisubscriberQueue(Generic[T]):
     """Allow a single producer to provide the same payload to multiple consumers simultaneously.
 
     An `asyncio.Queue` can be obtained directly by calling MultisubscriberQueue.queue() or
-    `MultisubscriberQueue.subscribe()` can be used to yield queue results.
+    `MultisubscriberQueue.subscribe()` can be used to yield data as it is available.
     """
 
     subscribers: set[Queue[T]]
@@ -33,8 +33,14 @@ class MultisubscriberQueue(Generic[T]):
         subscribe to data and have it yielded as it is available.
 
         Example:
-            with MultisubscriberQueue.subscribe() as data:
-                print(data)
+        ```
+        from asyncio_multisubscriber_queue import MultisubscriberQueue
+
+        # create a MultisubscriberQueue for distributing str instances
+        mqueue: MultisubscriberQueue[str] = MultisubscriberQueue()
+        async with mqueue.subscribe() as data:
+                first_item: str = await q.get()
+        ```
 
         Returns:
             AsyncGenerator containing subscriber data.
@@ -68,6 +74,17 @@ class MultisubscriberQueue(Generic[T]):
     @contextmanager
     def queue(self) -> Generator[Queue[T], None, None]:
         """Context helper which manages the lifecycle of the subscriber Queue.
+
+        Example:
+        ```
+        from asyncio import Queue
+        from asyncio_multisubscriber_queue import MultisubscriberQueue
+
+        # create a MultisubscriberQueue for distributing int instances
+        mqueue: MultisubscriberQueue[int] = MultisubscriberQueue()
+        with mqueue.queue() as q:
+            first_item: int = await q.get()
+        ```
 
         Returns:
             Generator containing a subscriber Queue.
