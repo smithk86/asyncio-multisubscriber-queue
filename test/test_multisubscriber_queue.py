@@ -1,57 +1,63 @@
 import asyncio
+from typing import Any
 
-import pytest  # type: ignore
+import pytest
 from asyncio_multisubscriber_queue import MultisubscriberQueue
 
 
-def test_queue(multisubscriber_queue):
-    assert len(multisubscriber_queue) == 0
-    with multisubscriber_queue.queue() as q:
+def test_queue() -> None:
+    queue: MultisubscriberQueue[Any] = MultisubscriberQueue()
+    assert len(queue) == 0
+    with queue.queue() as q:
         assert type(q) is asyncio.Queue
-        assert len(multisubscriber_queue) == 1
-    assert len(multisubscriber_queue) == 0
+        assert len(queue) == 1
+    assert len(queue) == 0
 
 
 @pytest.mark.asyncio
-async def test_single_subscriber(multisubscriber_queue, event_loop):
-    async def producer():
+async def test_single_subscriber() -> None:
+    queue: MultisubscriberQueue[str] = MultisubscriberQueue()
+
+    async def producer() -> None:
         await asyncio.sleep(0.25)
-        await multisubscriber_queue.put("test1")
-        await multisubscriber_queue.put("test2")
-        await multisubscriber_queue.put("test3")
-        await multisubscriber_queue.put("test4")
-        await multisubscriber_queue.close()
+        await queue.put("test1")
+        await queue.put("test2")
+        await queue.put("test3")
+        await queue.put("test4")
+        await queue.close()
 
-    event_loop.create_task(producer())
+    asyncio.create_task(producer())
 
-    subscriber = multisubscriber_queue.subscribe()
-    assert await subscriber.__anext__() == "test1"
-    assert await subscriber.__anext__() == "test2"
-    assert await subscriber.__anext__() == "test3"
-    assert await subscriber.__anext__() == "test4"
+    subscriber = queue.subscribe()
+    assert await anext(subscriber) == "test1"
+    assert await anext(subscriber) == "test2"
+    assert await anext(subscriber) == "test3"
+    assert await anext(subscriber) == "test4"
     with pytest.raises(StopAsyncIteration):
-        await subscriber.__anext__()
+        await anext(subscriber)
 
-    assert len(multisubscriber_queue) == 0
+    assert len(queue) == 0
 
 
 @pytest.mark.asyncio
-async def test_multiple_subscribers(multisubscriber_queue, event_loop):
-    async def create_consumer():
-        subscriber = multisubscriber_queue.subscribe()
-        await subscriber.__anext__()
-        await subscriber.__anext__()
+async def test_multiple_subscribers() -> None:
+    queue: MultisubscriberQueue[int] = MultisubscriberQueue()
+
+    async def create_consumer() -> None:
+        subscriber = queue.subscribe()
+        await anext(subscriber)
+        await anext(subscriber)
 
     tasks = list()
-    tasks.append(event_loop.create_task(create_consumer()))
-    tasks.append(event_loop.create_task(create_consumer()))
-    tasks.append(event_loop.create_task(create_consumer()))
-    tasks.append(event_loop.create_task(create_consumer()))
+    tasks.append(asyncio.create_task(create_consumer()))
+    tasks.append(asyncio.create_task(create_consumer()))
+    tasks.append(asyncio.create_task(create_consumer()))
+    tasks.append(asyncio.create_task(create_consumer()))
     await asyncio.sleep(0.25)
 
-    await multisubscriber_queue.put("test")
-    assert len(multisubscriber_queue) == 4
+    await queue.put(1337)
+    assert len(queue) == 4
 
-    await multisubscriber_queue.close()
+    await queue.close()
     await asyncio.wait(tasks)
-    assert len(multisubscriber_queue) == 0
+    assert len(queue) == 0

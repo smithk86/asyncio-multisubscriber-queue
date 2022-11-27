@@ -5,18 +5,17 @@ import asyncio
 from asyncio_multisubscriber_queue import MultisubscriberQueue
 
 
-async def main():
-    async def consumer(name):
+async def main() -> None:
+    async def consumer(name: str) -> None:
         async for data in mqueue.subscribe():
             print(f"{name}: {data}")
 
-    loop = asyncio.get_running_loop()
-    mqueue = MultisubscriberQueue()
+    mqueue: MultisubscriberQueue[str] = MultisubscriberQueue()
 
     # setup consumer tasks
     tasks = list()
     for i in range(5):
-        tasks.append(loop.create_task(consumer(f"consumer {i}")))
+        tasks.append(asyncio.create_task(consumer(f"consumer {i}")))
     await asyncio.sleep(0.5)  # wait half a second for consumers to be ready
 
     # produce messages to the multisubscriber queue
@@ -28,10 +27,13 @@ async def main():
     await asyncio.sleep(0.5)
 
     # for subscribers to disconnect
-    await mqueue.put(StopAsyncIteration)
+    await mqueue.close()
 
     # wait for the tasks to end
     await asyncio.wait(tasks)
+
+    # subscriber count is zero
+    assert len(mqueue) == 0
 
 
 if __name__ == "__main__":

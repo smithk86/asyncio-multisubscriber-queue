@@ -1,29 +1,30 @@
-from __future__ import annotations
-
-import asyncio
-from asyncio import Queue, wait_for
+from asyncio import Queue
 from contextlib import contextmanager
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from typing import Any, AsyncGenerator, Generator, List
+from typing import Any, AsyncGenerator, Generator, Generic, TypeVar, cast
 
 
-class MultisubscriberQueue:
-    def __init__(self):
+T = TypeVar("T")
+
+
+class MultisubscriberQueue(Generic[T]):
+    subscribers: list[Queue[T]]
+
+    __slots__ = ("subscribers",)
+
+    def __init__(self) -> None:
         """
         The constructor for MultisubscriberQueue class
 
         """
-        self.subscribers: List[Queue] = list()
+        self.subscribers = list()
 
     def __len__(self) -> int:
         return len(self.subscribers)
 
-    def __contains__(self, q: Queue) -> bool:
+    def __contains__(self, q: Queue[T]) -> bool:
         return q in self.subscribers
 
-    async def subscribe(self) -> AsyncGenerator:
+    async def subscribe(self) -> AsyncGenerator[T, None]:
         """
         Subscribe to data using an async generator
 
@@ -44,20 +45,20 @@ class MultisubscriberQueue:
                     yield _data
 
     @contextmanager
-    def queue(self) -> Generator:
+    def queue(self) -> Generator[Queue[T], None, None]:
         """
         Get a new async Queue which is tracked and garbage collected
         when the context is concluded
 
         """
-        _queue: Queue = Queue()
+        _queue: Queue[T] = Queue()
         try:
             self.subscribers.append(_queue)
             yield _queue
         finally:
             self.subscribers.remove(_queue)
 
-    def remove(self, queue: Queue) -> None:
+    def remove(self, queue: Queue[T]) -> None:
         """
         Remove queue from the pool of subscribers
 
@@ -65,7 +66,7 @@ class MultisubscriberQueue:
         if queue in self.subscribers:
             self.subscribers.remove(queue)
 
-    async def put(self, data: Any) -> None:
+    async def put(self, data: T) -> None:
         """
         Put new data on all subscriber queues
 
@@ -78,4 +79,4 @@ class MultisubscriberQueue:
         Force clients using MultisubscriberQueue.subscribe() to end iteration
 
         """
-        await self.put(StopAsyncIteration)
+        await self.put(cast(T, StopAsyncIteration))
