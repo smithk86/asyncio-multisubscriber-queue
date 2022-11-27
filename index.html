@@ -389,7 +389,7 @@
   
       <p>Allow a single producer to provide the same payload to multiple consumers simultaneously.</p>
 <p>An <code>asyncio.Queue</code> can be obtained directly by calling MultisubscriberQueue.queue() or
-<code>MultisubscriberQueue.subscribe()</code> can be used to yield queue results.</p>
+<code>MultisubscriberQueue.subscribe()</code> can be used to yield data as it is available.</p>
 
 
 
@@ -565,6 +565,15 @@
   <div class="doc doc-contents ">
   
       <p>Context helper which manages the lifecycle of the subscriber Queue.</p>
+<p>Example:</p>
+<pre><code>from asyncio import Queue
+from asyncio_multisubscriber_queue import MultisubscriberQueue
+
+# create a MultisubscriberQueue for distributing int instances
+mqueue: MultisubscriberQueue[int] = MultisubscriberQueue()
+with mqueue.queue() as q:
+    first_item: int = await q.get()
+</code></pre>
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -607,12 +616,15 @@
       <p>Subscribe to <code>MultisubscriberQueue</code> using an async generator.</p>
 <p>Instead of working with the Queue directly, the client can
 subscribe to data and have it yielded as it is available.</p>
+<p>Example:</p>
+<pre><code>from asyncio_multisubscriber_queue import MultisubscriberQueue
 
-<details class="example">
-  <summary>Example</summary>
-  <p>with MultisubscriberQueue.subscribe() as data:
-    print(data)</p>
-</details>
+# create a MultisubscriberQueue for distributing str instances
+mqueue: MultisubscriberQueue[str] = MultisubscriberQueue()
+async with mqueue.subscribe() as data:
+        first_item: str = await q.get()
+</code></pre>
+
   <p><strong>Returns:</strong></p>
   <table>
     <thead>
