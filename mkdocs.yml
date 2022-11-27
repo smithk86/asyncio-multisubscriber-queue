@@ -1,0 +1,22 @@
+site_name: Asyncio Multisubscriber Queue
+repo_url: https://github.com/smithk86/asyncio-multisubscriber-queue
+repo_name: smithk86/asyncio-multisubscriber-queue
+site_url: https://smithk86.github.io/asyncio-multisubscriber-queue
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: dark)"
+nav:
+  - "index.md"
+plugins:
+  - mkdocstrings:
+      handlers:
+        python:
+          import:
+            - https://docs.python.org/3/objects.inv
+          options:
+            show_source: false
+            docstring_style: google
+            show_root_full_path: false
+watch:
+  - asyncio_multisubscriber_queue
