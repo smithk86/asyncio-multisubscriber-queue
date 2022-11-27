@@ -6,6 +6,8 @@ from asyncio_multisubscriber_queue import MultisubscriberQueue
 
 
 async def main() -> None:
+    """An example showing the MultisubscriberQueue in action."""
+
     async def consumer(name: str) -> None:
         async for data in mqueue.subscribe():
             print(f"{name}: {data}")
@@ -13,7 +15,7 @@ async def main() -> None:
     mqueue: MultisubscriberQueue[str] = MultisubscriberQueue()
 
     # setup consumer tasks
-    tasks = list()
+    tasks = []
     for i in range(5):
         tasks.append(asyncio.create_task(consumer(f"consumer {i}")))
     await asyncio.sleep(0.5)  # wait half a second for consumers to be ready

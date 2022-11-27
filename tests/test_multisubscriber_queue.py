@@ -2,6 +2,7 @@ import asyncio
 from typing import Any
 
 import pytest
+
 from asyncio_multisubscriber_queue import MultisubscriberQueue
 
 
@@ -48,14 +49,14 @@ async def test_multiple_subscribers() -> None:
         await anext(subscriber)
         await anext(subscriber)
 
-    tasks = list()
-    tasks.append(asyncio.create_task(create_consumer()))
-    tasks.append(asyncio.create_task(create_consumer()))
-    tasks.append(asyncio.create_task(create_consumer()))
-    tasks.append(asyncio.create_task(create_consumer()))
+    tasks: set[asyncio.Task[None]] = {*()}
+    tasks.add(asyncio.create_task(create_consumer()))
+    tasks.add(asyncio.create_task(create_consumer()))
+    tasks.add(asyncio.create_task(create_consumer()))
+    tasks.add(asyncio.create_task(create_consumer()))
     await asyncio.sleep(0.25)
 
-    await queue.put(1337)
+    await queue.put(1338)
     assert len(queue) == 4
 
     await queue.close()

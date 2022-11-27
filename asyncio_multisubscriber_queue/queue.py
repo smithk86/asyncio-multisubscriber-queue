@@ -2,21 +2,23 @@ from asyncio import Queue
 from contextlib import contextmanager
 from typing import Any, AsyncGenerator, Generator, Generic, TypeVar, cast
 
-
 T = TypeVar("T")
 
 
 class MultisubscriberQueue(Generic[T]):
-    subscribers: list[Queue[T]]
+    """Allow a single producer to provide the same payload to multiple consumers simultaneously.
+
+    An `asyncio.Queue` can be obtained directly by calling MultisubscriberQueue.queue() or
+    `MultisubscriberQueue.subscribe()` can be used to yield queue results.
+    """
+
+    subscribers: set[Queue[T]]
 
     __slots__ = ("subscribers",)
 
     def __init__(self) -> None:
-        """
-        The constructor for MultisubscriberQueue class
-
-        """
-        self.subscribers = list()
+        """The constructor for MultisubscriberQueue class."""
+        self.subscribers = {*()}
 
     def __len__(self) -> int:
         return len(self.subscribers)
@@ -25,58 +27,69 @@ class MultisubscriberQueue(Generic[T]):
         return q in self.subscribers
 
     async def subscribe(self) -> AsyncGenerator[T, None]:
-        """
-        Subscribe to data using an async generator
+        """Subscribe to `MultisubscriberQueue` using an async generator.
 
         Instead of working with the Queue directly, the client can
-        subscribe to data and have it yielded directly.
+        subscribe to data and have it yielded as it is available.
 
         Example:
             with MultisubscriberQueue.subscribe() as data:
                 print(data)
 
+        Returns:
+            AsyncGenerator containing subscriber data.
         """
         with self.queue() as q:
             while True:
                 _data: Any = await q.get()
                 if _data is StopAsyncIteration:
                     break
-                else:
-                    yield _data
+                yield _data
 
-    @contextmanager
-    def queue(self) -> Generator[Queue[T], None, None]:
-        """
-        Get a new async Queue which is tracked and garbage collected
-        when the context is concluded
+    def add(self) -> Queue[T]:
+        """Get a new Queue which is part of the subscriber set.
 
+        Returns:
+            A subscriber Queue.
         """
-        _queue: Queue[T] = Queue()
-        try:
-            self.subscribers.append(_queue)
-            yield _queue
-        finally:
-            self.subscribers.remove(_queue)
+        queue: Queue[T] = Queue()
+        self.subscribers.add(queue)
+        return queue
 
     def remove(self, queue: Queue[T]) -> None:
-        """
-        Remove queue from the pool of subscribers
+        """Remove given queue from the subscriber set.
 
+        Args:
+            queue: Queue object to be removed from the subscriber set.
         """
         if queue in self.subscribers:
             self.subscribers.remove(queue)
 
-    async def put(self, data: T) -> None:
-        """
-        Put new data on all subscriber queues
+    @contextmanager
+    def queue(self) -> Generator[Queue[T], None, None]:
+        """Context helper which manages the lifecycle of the subscriber Queue.
 
+        Returns:
+            Generator containing a subscriber Queue.
+        """
+        _queue = self.add()
+        try:
+            yield _queue
+        finally:
+            self.remove(_queue)
+
+    async def put(self, data: T) -> None:
+        """Put data on all the Queues in the subscriber set.
+
+        Args:
+            data: Data for the Queues. Please note that `StopAsyncIteration` is used to close all subscribing queues.
         """
         for _queue in self.subscribers:
             await _queue.put(data)
 
     async def close(self) -> None:
-        """
-        Force clients using MultisubscriberQueue.subscribe() to end iteration
+        """Put `StopAsyncIteration` on the subscriber Queues.
 
+        This is used to signal the end of the MultisubscriberQueue session.
         """
         await self.put(cast(T, StopAsyncIteration))

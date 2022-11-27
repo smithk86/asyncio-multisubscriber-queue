@@ -1,0 +1,7 @@
+[flake8]
+max-line-length = 120
+max-complexity = 12
+ignore = TC001,TC003,TC006
+per-file-ignores =
+    example.py:C408,SCS108,T201
+    tests/*:SCS108

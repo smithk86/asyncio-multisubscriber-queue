@@ -2,7 +2,7 @@
 [tool.poetry]
 name = "asyncio-multisubscriber-queue"
 version = "0.3.2-dev"
-description = "Allow a single producer to provide the same payload to multiple consumers simultaniously"
+description = "Allow a single producer to provide the same payload to multiple consumers simultaneously"
 authors = ["Kyle Smith <smithk86@smc3.com>"]
 license = "MIT"
 readme = "README.md"
@@ -30,8 +30,42 @@ pytest = "pytest:main"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+
 [tool.mypy]
 strict = "true"
 
 [tool.pytest.ini_options]
 addopts = "--mypy"
+
+[tool.pylint.MESSAGE_CONTROL]
+disable = [
+    "missing-module-docstring",
+    "invalid-name",
+]
+enable = "useless-suppression"
+
+[tool.pylint.REPORTS]
+reports = "no"
+
+[tool.pylint.FORMAT]
+max-line-length = "120"
+
+[tool.pylint.VARIABLES]
+ignored-argument-names = "args|kwargs|_|__"
+
+[tool.pylint.BASIC]
+no-docstring-rgx = "(__.*__|main|test.*|.*test|.*Test|^_.*)$"
+
+[tool.pycln]
+all = true
+
+[tool.pyright]
+include = ["__template__"]
+
+[tool.pydocstyle]
+add-ignore = "D100,D104,D105,D107"
+convention = "google"
+match_dir = "asyncio_task_pool"
