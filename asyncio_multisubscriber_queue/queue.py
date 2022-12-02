@@ -13,6 +13,7 @@ class MultisubscriberQueue(Generic[T]):
     """
 
     subscribers: set[Queue[T]]
+    _close_sentinel: T = cast(T, object())
 
     __slots__ = ("subscribers",)
 
@@ -48,7 +49,7 @@ class MultisubscriberQueue(Generic[T]):
         with self.queue() as q:
             while True:
                 _data: Any = await q.get()
-                if _data is StopAsyncIteration:
+                if _data is self._close_sentinel:
                     break
                 yield _data
 
@@ -99,14 +100,14 @@ class MultisubscriberQueue(Generic[T]):
         """Put data on all the Queues in the subscriber set.
 
         Args:
-            data: Data for the Queues. Please note that `StopAsyncIteration` is used to close all subscribing queues.
+            data: Data for the Queues.
         """
         for _queue in self.subscribers:
             await _queue.put(data)
 
     async def close(self) -> None:
-        """Put `StopAsyncIteration` on the subscriber Queues.
+        """Put the close sentinel on the Queues.
 
         This is used to signal the end of the MultisubscriberQueue session.
         """
-        await self.put(cast(T, StopAsyncIteration))
+        await self.put(self._close_sentinel)
