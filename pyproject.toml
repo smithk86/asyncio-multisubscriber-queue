@@ -1,7 +1,7 @@
 [tool]
 [tool.poetry]
 name = "asyncio-multisubscriber-queue"
-version = "0.4.0"
+version = "0.4.1"
 description = "Allow a single producer to provide the same payload to multiple consumers simultaneously"
 authors = ["Kyle Smith <smithk86@smc3.com>"]
 license = "MIT"
