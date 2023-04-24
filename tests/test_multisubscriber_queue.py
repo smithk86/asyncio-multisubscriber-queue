@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any
+from typing import Any, TypeVar
 
 import pytest
 
@@ -61,4 +61,44 @@ async def test_multiple_subscribers() -> None:
 
     await queue.close()
     await asyncio.wait(tasks)
+    assert len(queue) == 0
+
+
+@pytest.mark.asyncio
+async def test_single_subscriber_superclass() -> None:
+    T = TypeVar("T")
+
+    class EnumeratedQueue(asyncio.Queue[T]):
+        put_count: int = 0
+
+        async def put(self, item: T) -> None:
+            EnumeratedQueue.put_count += 1
+            await super().put(item)
+
+    class CustomMultisubscriberQueue(MultisubscriberQueue[T]):
+        __queue_class__ = EnumeratedQueue
+
+    queue: CustomMultisubscriberQueue[str] = CustomMultisubscriberQueue()
+
+    async def producer() -> None:
+        await asyncio.sleep(0.25)
+        await queue.put("test1")
+        await queue.put("test2")
+        await queue.put("test3")
+        await queue.put("test4")
+        await queue.close()
+
+    assert EnumeratedQueue.put_count == 0
+
+    asyncio.create_task(producer())
+
+    subscriber = queue.subscribe()
+    assert await anext(subscriber) == "test1"
+    assert await anext(subscriber) == "test2"
+    assert await anext(subscriber) == "test3"
+    assert await anext(subscriber) == "test4"
+    with pytest.raises(StopAsyncIteration):
+        await anext(subscriber)
+
+    assert EnumeratedQueue.put_count == 5
     assert len(queue) == 0

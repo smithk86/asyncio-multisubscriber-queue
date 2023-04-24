@@ -1,6 +1,7 @@
 from asyncio import Queue
+from collections.abc import AsyncGenerator, Generator
 from contextlib import contextmanager
-from typing import Any, AsyncGenerator, Generator, Generic, TypeVar, cast
+from typing import Any, Generic, TypeVar, cast
 
 T = TypeVar("T")
 
@@ -14,6 +15,7 @@ class MultisubscriberQueue(Generic[T]):
 
     subscribers: set[Queue[T]]
     _close_sentinel: T = cast(T, object())
+    __queue_class__: type[Queue[T]] = Queue
 
     __slots__ = ("subscribers",)
 
@@ -34,6 +36,7 @@ class MultisubscriberQueue(Generic[T]):
         subscribe to data and have it yielded as it is available.
 
         Example:
+        -------
         ```
         from asyncio_multisubscriber_queue import MultisubscriberQueue
 
@@ -44,6 +47,7 @@ class MultisubscriberQueue(Generic[T]):
         ```
 
         Returns:
+        -------
             AsyncGenerator containing subscriber data.
         """
         with self.queue() as q:
@@ -56,10 +60,11 @@ class MultisubscriberQueue(Generic[T]):
     def add(self) -> Queue[T]:
         """Get a new Queue which is part of the subscriber set.
 
-        Returns:
+        Returns
+        -------
             A subscriber Queue.
         """
-        queue: Queue[T] = Queue()
+        queue: Queue[T] = self.__queue_class__()
         self.subscribers.add(queue)
         return queue
 
@@ -67,6 +72,7 @@ class MultisubscriberQueue(Generic[T]):
         """Remove given queue from the subscriber set.
 
         Args:
+        ----
             queue: Queue object to be removed from the subscriber set.
         """
         if queue in self.subscribers:
@@ -77,6 +83,7 @@ class MultisubscriberQueue(Generic[T]):
         """Context helper which manages the lifecycle of the subscriber Queue.
 
         Example:
+        -------
         ```
         from asyncio import Queue
         from asyncio_multisubscriber_queue import MultisubscriberQueue
@@ -88,6 +95,7 @@ class MultisubscriberQueue(Generic[T]):
         ```
 
         Returns:
+        -------
             Generator containing a subscriber Queue.
         """
         _queue = self.add()
@@ -100,6 +108,7 @@ class MultisubscriberQueue(Generic[T]):
         """Put data on all the Queues in the subscriber set.
 
         Args:
+        ----
             data: Data for the Queues.
         """
         for _queue in self.subscribers:
